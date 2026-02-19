@@ -6,6 +6,9 @@ import { getIcon } from '../../assets/icons.js';
 export function initJumperGame(container, onBack) {
     container.innerHTML = '';
 
+    // Load High Score
+    let highScore = localStorage.getItem('jumper_highScore') || 0;
+
     // Header
     const header = createElement('div', 'game-header');
     header.style.display = 'flex';
@@ -29,14 +32,29 @@ export function initJumperGame(container, onBack) {
         className: 'btn-sm'
     });
 
+    const scoreContainer = createElement('div', 'score-container');
+    scoreContainer.style.display = 'flex';
+    scoreContainer.style.flexDirection = 'column';
+    scoreContainer.style.alignItems = 'flex-end';
+
+    const highScoreDisplay = createElement('div', 'high-score', `En Yüksek: ${highScore}`);
+    highScoreDisplay.style.fontSize = '1.2rem';
+    highScoreDisplay.style.fontWeight = 'bold';
+    highScoreDisplay.style.color = '#FFD700'; // Gold color to make it pop
+    highScoreDisplay.style.textShadow = '1px 1px 0 rgba(0,0,0,0.5)';
+    highScoreDisplay.style.marginBottom = '5px';
+
     const scoreDisplay = createElement('div', 'score', '0');
     scoreDisplay.style.fontSize = '2rem';
     scoreDisplay.style.fontWeight = 'bold';
     scoreDisplay.style.color = 'white';
     scoreDisplay.style.textShadow = '2px 2px 0 var(--color-primary)';
 
+    scoreContainer.appendChild(highScoreDisplay);
+    scoreContainer.appendChild(scoreDisplay);
+
     header.appendChild(backBtn);
-    header.appendChild(scoreDisplay);
+    header.appendChild(scoreContainer);
     container.appendChild(header);
 
     // Game Area
@@ -79,10 +97,10 @@ export function initJumperGame(container, onBack) {
 
     // Obstacles
     let obstacles = [];
-    let obstacleSpeed = 3.0; // Fast! (was 2.0)
-    let obstacleSpawnInterval = 1800; // Frequent! (was 2500)
+    let obstacleSpeed = 4.0; // Faster (was 3.0)
+    let obstacleSpawnInterval = 1300; // Frequent (was 1800)
     let lastSpawnTime = 0;
-    const gapSize = 160; // Tight! (was 180)
+    const gapSize = 130; // Tighter (was 160)
     let lastTime = 0; // Delta Time tracking
 
     // Start Screen Overlay
@@ -243,9 +261,15 @@ export function initJumperGame(container, onBack) {
 
     function endGame() {
         gameOver = true;
+
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('jumper_highScore', highScore);
+        }
+
         Modal({
             title: 'Oyun Bitti!',
-            message: `Skorun: ${score}`,
+            message: `Skorun: ${score}<br><span style="color:#FFD700">En Yüksek: ${highScore}</span>`,
             actionText: 'Tekrar Oyna',
             onAction: () => initJumperGame(container, onBack),
             secondaryText: 'Ana Menü',

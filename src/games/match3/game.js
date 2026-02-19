@@ -237,7 +237,7 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
         gridContainer.style.pointerEvents = '';
 
         // Resolve resulting matches
-        await processBoardState();
+        await processBoardState([]);
     }
 
     function activateColorBomb() {
@@ -287,8 +287,80 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
             cell.appendChild(icon);
             cell.dataset.type = randomType;
 
-            cell.addEventListener('mousedown', () => handleInput(i));
-            cell.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(i); });
+            // Input Handling
+            const startInput = (e) => {
+                if (isProcessing) return;
+                handleInput(i); // Click/Select behavior
+
+                // Record Start Pos for Swipe means
+                const touch = e.touches ? e.touches[0] : e;
+                cell.dataset.startX = touch.clientX;
+                cell.dataset.startY = touch.clientY;
+            };
+
+            const endInput = (e) => {
+                if (isProcessing || !cell.dataset.startX) return;
+
+                const touch = e.changedTouches ? e.changedTouches[0] : e;
+                const endX = touch.clientX;
+                const endY = touch.clientY;
+                const startX = parseFloat(cell.dataset.startX);
+                const startY = parseFloat(cell.dataset.startY);
+
+                const dx = endX - startX;
+                const dy = endY - startY;
+                const absDx = Math.abs(dx);
+                const absDy = Math.abs(dy);
+
+                // Threshold for swipe (px)
+                if (Math.max(absDx, absDy) > 30) {
+                    let targetIndex = -1;
+                    const r = Math.floor(i / GRID_SIZE);
+                    const c = i % GRID_SIZE;
+
+                    if (absDx > absDy) {
+                        // Horizontal
+                        if (dx > 0 && c < GRID_SIZE - 1) targetIndex = i + 1; // Right
+                        else if (dx < 0 && c > 0) targetIndex = i - 1;       // Left
+                    } else {
+                        // Vertical
+                        if (dy > 0 && r < GRID_SIZE - 1) targetIndex = i + GRID_SIZE; // Down
+                        else if (dy < 0 && r > 0) targetIndex = i - GRID_SIZE;       // Up
+                    }
+
+                    if (targetIndex !== -1 && targetIndex < GRID_SIZE * GRID_SIZE) {
+                        // We act as if we clicked the target cell
+                        // Since 'startInput' already selected the current cell (i),
+                        // clicking 'targetIndex' will trigger the swap logic in handleInput.
+                        handleInput(targetIndex);
+                    }
+                }
+
+                delete cell.dataset.startX;
+                delete cell.dataset.startY;
+            };
+
+            cell.addEventListener('mousedown', startInput);
+            cell.addEventListener('touchstart', (e) => {
+                // Prevent default can cause issues with scrolling if not careful, 
+                // but for a game grid we usually want to prevent scroll.
+                // e.preventDefault(); 
+                startInput(e);
+            }, { passive: false });
+
+            // We attach 'mouseup'/'touchend' to the cell. 
+            // Note: If user drags OUT of the cell, this might not fire on the cell itself?
+            // Actually standard HTML drag behavior might need window listener, but for simple game grid:
+            // Let's try cell listener first. If logic fails (pointer up outside), we usually use pointer capture or window listener.
+            // But for a match-3, usually you stay within bounds.
+            cell.addEventListener('mouseup', endInput);
+            cell.addEventListener('touchend', endInput);
+
+            // Cancel on leave?
+            cell.addEventListener('mouseleave', (e) => {
+                // Optional: trigger endInput here too if mouse button down? 
+                // keeping simple for now.
+            });
 
             gridContainer.appendChild(cell);
             cells.push(cell);
@@ -380,7 +452,8 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
             await explodeColor(targetType);
             await wait(100); // Wait for DOM update
             await applyGravity();
-            await processBoardState();
+            await applyGravity();
+            await processBoardState([index]);
             return;
         }
 
@@ -492,7 +565,8 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
                 if (actionTaken) {
                     if (gameOver || !gridContainer.isConnected) return;
                     await applyGravity();
-                    await processBoardState();
+                    await applyGravity();
+                    await processBoardState([prevIndex, currIndex]);
                     if (movesLeft <= 0) checkEndGame();
                     return;
                 }
@@ -506,7 +580,7 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
                 } else {
                     movesLeft--;
                     updateStats();
-                    await processBoardState();
+                    await processBoardState([prevIndex, currIndex]);
                 }
 
                 if (movesLeft <= 0) checkEndGame();
@@ -697,7 +771,7 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
         return finalMatches;
     }
 
-    async function processBoardState() {
+    async function processBoardState(priorityIndices = []) {
         isProcessing = true;
         renderBoosters(); // Update UI to disabled
         while (true) {
@@ -708,7 +782,8 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
             const matches = findMatches();
             if (matches.length === 0) break;
 
-            await handleMatches(matches);
+            await handleMatches(matches, priorityIndices);
+            priorityIndices = []; // Clear priority after first pass
             checkEndGame(); // Check after scoring
             if (gameOver || !gridContainer.isConnected) break;
 
@@ -724,7 +799,7 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
         if (!gameOver) checkEndGame();
     }
 
-    async function handleMatches(matches) {
+    async function handleMatches(matches, priorityIndices = []) {
         // isProcessing handled in processBoardState
         const toDestroy = new Set();
         const specialsToCreate = [];
@@ -733,8 +808,17 @@ export function initMatch3Game(container, onBack, levelIndex = 0) {
             m.indices.forEach(i => toDestroy.add(i));
 
             let targetIdx = m.indices[1];
-            if (m.center !== undefined) targetIdx = m.center;
-            else targetIdx = m.indices[Math.floor(m.indices.length / 2)];
+            if (m.center !== undefined) {
+                targetIdx = m.center;
+            } else {
+                // Check priority indices (User interaction)
+                const priorityMatch = m.indices.find(idx => priorityIndices.includes(idx));
+                if (priorityMatch !== undefined) {
+                    targetIdx = priorityMatch;
+                } else {
+                    targetIdx = m.indices[Math.floor(m.indices.length / 2)];
+                }
+            }
 
             // Helper to trigger existing special if we are about to overwrite it
             const triggerExistingSpecial = (idx) => {

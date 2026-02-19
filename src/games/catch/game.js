@@ -1,13 +1,14 @@
 import { createElement, $, wait } from '../../utils.js';
+import { getIcon } from '../../assets/icons.js';
 import { Button } from '../../components/Button.js';
 import { Modal } from '../../components/Modal.js';
 
 const ITEMS = [
-    { type: 'good', icon: '\u{1F353}', score: 10 }, // Strawberry
-    { type: 'good', icon: '\u{1F353}', score: 10 }, // Strawberry (Double probability)
-    { type: 'good', icon: '\u{1F370}', score: 20 }, // Shortcake
-    { type: 'good', icon: '\u{1F370}', score: 20 }, // Shortcake (Double probability)
-    { type: 'bad', icon: '\u{1FAA8}', score: 0 }    // Rock (20%)
+    { type: 'good', icon: getIcon('strawberry'), score: 10 },
+    { type: 'good', icon: getIcon('strawberry'), score: 10 },
+    { type: 'good', icon: getIcon('shortcake'), score: 20 },
+    { type: 'good', icon: getIcon('shortcake'), score: 20 },
+    { type: 'bad', icon: getIcon('rock'), score: 0 }
 ];
 
 const LEVELS = [
@@ -78,7 +79,7 @@ export function initCatchGame(container, onBack, levelIndex = 0) {
 
     // Player (Basket)
     const player = createElement('div', 'player');
-    player.innerText = '🧺';
+    player.appendChild(getIcon('basket'));
     player.style.fontSize = '3.5rem';
     player.style.position = 'absolute';
     player.style.bottom = '10px';
