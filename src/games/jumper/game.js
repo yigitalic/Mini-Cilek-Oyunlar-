@@ -79,10 +79,10 @@ export function initJumperGame(container, onBack) {
 
     // Obstacles
     let obstacles = [];
-    let obstacleSpeed = 1.5; // Very Slow
-    let obstacleSpawnInterval = 3500; // Time based (was 220 frames)
+    let obstacleSpeed = 2.0; // Slightly faster (was 1.5)
+    let obstacleSpawnInterval = 2500; // Faster spawn (was 3500)
     let lastSpawnTime = 0;
-    const gapSize = 200; // Massive gap
+    const gapSize = 180; // Smaller gap (was 200)
     let lastTime = 0; // Delta Time tracking
 
     // Start Screen Overlay
