@@ -5,7 +5,9 @@ import { Modal } from '../../components/Modal.js';
 const ITEMS = [
     { type: 'good', icon: '🍓', score: 10 },
     { type: 'good', icon: '🍰', score: 20 },
-    { type: 'bad', icon: '🪨', score: 0 } // Rock, loses life
+    { type: 'bad', icon: '🪨', score: 0 }, // Rock 20%
+    { type: 'good', icon: '🧁', score: 15 },
+    { type: 'good', icon: '🥤', score: 25 }
 ];
 
 const LEVELS = [
@@ -91,7 +93,7 @@ export function initCatchGame(container, onBack, levelIndex = 0) {
     let score = 0;
     let lives = 3;
     let gameOver = false;
-    let spawnRate = 2800; // Much slower spawn (was 1400)
+    let spawnRate = 2000; // Faster spawn again (was 2800)
     let lastSpawn = 0;
     let entities = [];
     let playerX = 50; // Percentage

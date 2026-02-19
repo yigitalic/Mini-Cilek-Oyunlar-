@@ -74,8 +74,8 @@ export function initJumperGame(container, onBack) {
     // Physics - EASIER MODE
     let birdY = 200;
     let birdVelocity = 0;
-    const gravity = 0.15; // Very floaty
-    const jumpStrength = -3.5; // Gentle jump
+    const gravity = 0.25; // Faster fall (was 0.15)
+    const jumpStrength = -4.0; // Sharper jump (was -3.5)
 
     // Obstacles
     let obstacles = [];
