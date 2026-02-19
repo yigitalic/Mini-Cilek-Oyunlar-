@@ -4,18 +4,18 @@ import { Modal } from '../../components/Modal.js';
 
 const ITEMS = [
     { type: 'good', icon: '🍓', score: 10 },
+    { type: 'good', icon: '�', score: 10 }, // Double probability
     { type: 'good', icon: '🍰', score: 20 },
-    { type: 'bad', icon: '🪨', score: 0 }, // Rock 20%
-    { type: 'good', icon: '🧁', score: 15 },
-    { type: 'good', icon: '🥤', score: 25 }
+    { type: 'good', icon: '🍰', score: 20 }, // Double probability
+    { type: 'bad', icon: '�', score: 0 } // Rock 20% (1 in 5)
 ];
 
 const LEVELS = [
-    { target: 500, startSpeed: 1.5 }, // Faster drop (was 1.0)
-    { target: 500, startSpeed: 1.8 },
+    { target: 500, startSpeed: 1.8 }, // Faster drop (was 1.5)
     { target: 500, startSpeed: 2.1 },
     { target: 500, startSpeed: 2.4 },
-    { target: 500, startSpeed: 2.7 }
+    { target: 500, startSpeed: 2.7 },
+    { target: 500, startSpeed: 3.0 }
 ];
 
 export function initCatchGame(container, onBack, levelIndex = 0) {
