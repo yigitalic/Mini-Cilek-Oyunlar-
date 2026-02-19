@@ -9,11 +9,11 @@ const ITEMS = [
 ];
 
 const LEVELS = [
-    { target: 500, startSpeed: 1.0 },
-    { target: 500, startSpeed: 1.3 }, // +30% speed
-    { target: 500, startSpeed: 1.6 }, // +60% speed
-    { target: 500, startSpeed: 1.9 }, // +90% speed
-    { target: 500, startSpeed: 2.2 }  // +120% speed
+    { target: 500, startSpeed: 1.5 }, // Faster drop (was 1.0)
+    { target: 500, startSpeed: 1.8 },
+    { target: 500, startSpeed: 2.1 },
+    { target: 500, startSpeed: 2.4 },
+    { target: 500, startSpeed: 2.7 }
 ];
 
 export function initCatchGame(container, onBack, levelIndex = 0) {
@@ -91,7 +91,7 @@ export function initCatchGame(container, onBack, levelIndex = 0) {
     let score = 0;
     let lives = 3;
     let gameOver = false;
-    let spawnRate = 1400; // Slightly faster (was 1600)
+    let spawnRate = 2800; // Much slower spawn (was 1400)
     let lastSpawn = 0;
     let entities = [];
     let playerX = 50; // Percentage
