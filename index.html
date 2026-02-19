@@ -39,6 +39,14 @@
       return false;
     };
 
+    // Catch resource loading errors (like script 404)
+    window.addEventListener('error', function (e) {
+      if (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
+        document.getElementById('error-overlay').style.display = 'block';
+        document.getElementById('error-overlay').innerText += `\n\nKAYNAK YÜKLEME HATASI:\n${e.target.src || e.target.href}`;
+      }
+    }, true);
+
     // Also catch unhandled promise rejections
     window.onunhandledrejection = function (event) {
       document.getElementById('error-overlay').style.display = 'block';
