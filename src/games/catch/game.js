@@ -91,11 +91,12 @@ export function initCatchGame(container, onBack, levelIndex = 0) {
     let score = 0;
     let lives = 3;
     let gameOver = false;
-    let spawnRate = 1200; // Slower start
+    let spawnRate = 1600; // Slower start
     let lastSpawn = 0;
     let entities = [];
     let playerX = 50; // Percentage
-    let speedMultiplier = currentLevel.startSpeed; // Start higher on later levels
+    let speedMultiplier = currentLevel.startSpeed;
+    let lastTime = 0; // For Delta Time
 
     // Show Level Start Message
     if (levelIndex > 0) {
@@ -143,9 +144,24 @@ export function initCatchGame(container, onBack, levelIndex = 0) {
     function loop(timestamp) {
         if (gameOver) return;
 
+        // Delta Time Calculation
+        if (!lastTime) lastTime = timestamp;
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        // Target 60 FPS (approx 16.67ms per frame)
+        // If dt is 33ms (30fps), timeScale is 2.0 -> things move 2x distance per frame to keep up
+        const timeScale = dt / 16.666;
+
+        // Prevent huge jumps if tab was inactive
+        if (timeScale > 5) {
+            requestAnimationFrame(loop);
+            return;
+        }
+
         // Difficulty Increase: Based on SCORE now, not time
         // speedMultiplier handled in collision logic + initial level speed
-        const currentSpawnRate = Math.max(400, spawnRate - (score * 5)); // Spawn slightly faster as score goes up
+        const currentSpawnRate = Math.max(700, spawnRate - (score * 5)); // Min 700ms limit (was 400ms)
 
         // Spawning
         if (timestamp - lastSpawn > currentSpawnRate) {
@@ -154,8 +170,11 @@ export function initCatchGame(container, onBack, levelIndex = 0) {
         }
 
         // Update Entities
+        // Update Entities
         entities.forEach((entity, index) => {
-            entity.y += entity.speed * speedMultiplier;
+            // Apply Time Scale for consistent speed across devices
+            entity.y += entity.speed * speedMultiplier * timeScale;
+
             entity.el.style.top = `${entity.y}px`;
             entity.rotation += entity.rotSpeed;
             entity.el.style.transform = `rotate(${entity.rotation}deg)`;

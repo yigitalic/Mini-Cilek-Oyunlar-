@@ -80,9 +80,10 @@ export function initJumperGame(container, onBack) {
     // Obstacles
     let obstacles = [];
     let obstacleSpeed = 1.5; // Very Slow
-    const obstacleSpawnRate = 220; // Huge distance
-    let frameCount = 0;
+    let obstacleSpawnInterval = 3500; // Time based (was 220 frames)
+    let lastSpawnTime = 0;
     const gapSize = 200; // Massive gap
+    let lastTime = 0; // Delta Time tracking
 
     // Start Screen Overlay
     const startOverlay = createElement('div', 'start-overlay', 'Başlamak için Dokun!');
@@ -105,6 +106,8 @@ export function initJumperGame(container, onBack) {
 
         if (!gameActive) {
             gameActive = true;
+            lastTime = 0;
+            lastSpawnTime = performance.now();
             startOverlay.style.opacity = '0';
             requestAnimationFrame(gameLoop);
         }
@@ -116,12 +119,19 @@ export function initJumperGame(container, onBack) {
     gameArea.addEventListener('touchstart', jump);
 
     // Game Loop
-    function gameLoop() {
+    function gameLoop(timestamp) {
         if (gameOver) return;
 
+        // Delta Time
+        if (!lastTime) lastTime = timestamp;
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        const timeScale = dt / 16.666;
+
         // Bird Physics
-        birdVelocity += gravity;
-        birdY += birdVelocity;
+        birdVelocity += gravity * timeScale;
+        birdY += birdVelocity * timeScale;
         bird.style.top = `${birdY}px`;
 
         // Rotation
@@ -134,16 +144,14 @@ export function initJumperGame(container, onBack) {
             return;
         }
 
-        // Level Up Speed Logic - Mod 5 handled in Score Logic
-        frameCount++;
-
         // Obstacles
-        if (frameCount % obstacleSpawnRate === 0) {
+        if (timestamp - lastSpawnTime > obstacleSpawnInterval) {
             spawnObstacle();
+            lastSpawnTime = timestamp;
         }
 
         obstacles.forEach((obs, index) => {
-            obs.x -= obstacleSpeed;
+            obs.x -= obstacleSpeed * timeScale;
             obs.topEl.style.left = `${obs.x}px`;
             obs.bottomEl.style.left = `${obs.x}px`;
 
